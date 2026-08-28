@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <title>Pick a Winner | አሸናፊ ይምረጡ</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --gold: #FFD700;
+            --red: #FF0000;
+            --green: #2ed573;
+            --blue: #1e90ff;
+            --dark: #333;
+            --light: #ffffff;
+            --bg-light: #f0f2f5;
+            --text-dark: #333;
+            --text-muted: #666;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', 'Arial', 'Noto Sans Ethiopic', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            animation: float 10s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            25% { transform: translateY(-50px) translateX(30px); opacity: 0.6; }
+            50% { transform: translateY(-100px) translateX(-20px); opacity: 0.4; }
+            75% { transform: translateY(-50px) translateX(-40px); opacity: 0.7; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            padding: 25px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 1;
+            animation: containerAppear 0.8s ease-out;
+        }
+
+        @keyframes containerAppear {
+            from { opacity: 0; transform: scale(0.8) translateY(50px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .language-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .lang-btn {
+            padding: 10px 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        h1 {
+            font-size: 2em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            animation: titleShine 3s ease-in-out infinite;
+        }
+
+        @keyframes titleShine {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+            letter-spacing: 2px;
+        }
+
+        .wheel-section {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 25px auto;
+        }
+
+        @media (min-width: 768px) {
+            .wheel-section {
+                width: 350px;
+                height: 350px;
+            }
+        }
+
+        .wheel-glow {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent);
+            animation: glowPulse 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+
+        .pointer-container {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            pointer-events: none;
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.9));
+        }
+
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 55px solid #FF0000;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 1));
+            animation: pointerBounce 1.5s ease-in-out infinite;
+            position: relative;
+        }
+
+        .pointer::after {
+            content: '';
+            position: absolute;
+            top: -55px;
+            left: -18px;
+            width: 36px;
+            height: 36px;
+            background: radial-gradient(circle, #FFD700, #FFA500);
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 1);
+        }
+
+        .pointer-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FF0000;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.5);
+        }
+
+        @keyframes pointerBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        .winner-line {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 90px;
+            background: linear-gradient(to bottom, #FF0000, #FFD700, #FF0000);
+            z-index: 999;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+            pointer-events: none;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 10px solid #FFD700;
+            position: relative;
+            transition: transform 6s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
+            background: #f0f0f0;
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            border: 5px solid #FFD700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            z-index: 10;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-section {
+            margin: 15px 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .input-group {
+                flex-direction: column;
+            }
+        }
+
+        .separator-info {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-bottom: 5px;
+            text-align: center;
+            font-weight: bold;
+            background: #fef9e7;
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #f9e79f;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            color: #333;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: 'Poppins', 'Segoe UI', 'Arial', 'Noto Sans Ethiopic', sans-serif;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-import {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-spin {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            font-size: 20px;
+            padding: 15px 30px;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-export-pdf {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.3);
+            padding: 8px 15px;
+            font-size: 13px;
+        }
+
+        .btn-delete-all {
+            background: linear-gradient(135deg, #ff4757, #ff3838);
+            box-shadow: 0 5px 20px rgba(255, 71, 87, 0.3);
+            padding: 8px 15px;
+            font-size: 13px;
+        }
+
+        .participants-section {
+            margin-top: 15px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .names-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 12px;
+            min-height: 50px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .name-tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            animation: fadeIn 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.3s;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.5s;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            text-align: center;
+            animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 90vw;
+            width: 380px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            border: 5px solid #FFD700;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .modal-emoji {
+            font-size: 3.5em;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .modal-title {
+            color: #667eea;
+            font-size: 1.8em;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .modal-winner {
+            color: #333;
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .modal-position {
+            color: #FFA500;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .modal-close-btn {
+            background: #FFD700;
+            color: #333;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .winners-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .winners-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .winners-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .winner-item {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .winner-number {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .winner-info {
+            flex: 1;
+        }
+
+        .winner-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .winner-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .delete-winner-btn {
+            background: rgba(255, 71, 87, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .confirm-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            z-index: 3000;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 90vw;
+            width: 330px;
+            animation: popIn 0.3s;
+        }
+
+        .confirm-dialog h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 18px;
+            color: #666;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-delete {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-cancel-delete {
+            background: #666;
+            color: white;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 2500;
+            animation: confettiFall 2s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="language-toggle">
+                <button class="lang-btn active" id="btnEnglish" onclick="setLanguage('en')">English</button>
+                <button class="lang-btn" id="btnAmharic" onclick="setLanguage('am')">አማርኛ</button>
+            </div>
+            <h1 id="mainTitle">🎯 Pick a Winner</h1>
+            <p class="subtitle" id="subtitleText">SPIN • WIN • CELEBRATE</p>
+        </div>
+
+        <div class="wheel-section">
+            <div class="wheel-glow"></div>
+            <div class="winner-line"></div>
+            <div class="pointer-container">
+                <div class="pointer-label" id="pointerLabel">WINNER</div>
+                <div class="pointer"></div>
+            </div>
+            <div class="wheel" id="wheel">
+                <div class="wheel-center">🎯</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="nameInput" placeholder="Enter participant name..." />
+                <button type="button" id="addBtn" onclick="addParticipant()">➕ Add</button>
+            </div>
+            <div class="separator-info" id="separatorInfo">Separator: comma (,) only</div>
+            <div class="input-group">
+                <input type="text" id="bulkInput" placeholder="Bulk: name1, name2, name3..." />
+                <button type="button" class="btn-import" id="importBtn" onclick="bulkImport()">📥 Import</button>
+            </div>
+        </div>
+
+        <div class="participants-section">
+            <div class="section-title" id="participantsTitle">👥 Participants (<span id="count">0</span>)</div>
+            <div class="names-list" id="namesList">
+                <p style="color: #999; width: 100%; text-align: center;" id="noParticipants">No participants yet</p>
+            </div>
+        </div>
+
+        <button type="button" class="btn-spin" id="spinButton" onclick="spinWheel()" disabled>
+            🎰 PICK A WINNER!
+        </button>
+
+        <div class="message" id="message"></div>
+
+        <div class="winners-section" id="winnersSection" style="display: none;">
+            <div class="winners-title">
+                <span id="winnersTitle">🏆 Winners List</span>
+                <button type="button" class="btn-export-pdf" id="exportBtn" onclick="exportToPDF()">📄 Export PDF</button>
+                <button type="button" class="btn-delete-all" id="deleteAllBtn" onclick="deleteAllWinners()">🗑️ Delete All</button>
+            </div>
+            <div class="winners-list" id="winnersList"></div>
+        </div>
+    </div>
+
+    <!-- Hidden div for PDF export -->
+    <div id="pdfContent" style="display: none;"></div>
+
+    <script>
+        var participants = [];
+        var winners = [];
+        var isSpinning = false;
+        var currentRotation = 0;
+        var winnerCounter = 0;
+        var currentLanguage = 'en';
+
+        var translations = {
+            en: {
+                mainTitle: '🎯 Pick a Winner',
+                subtitle: 'SPIN • WIN • CELEBRATE',
+                pointerLabel: 'WINNER',
+                namePlaceholder: 'Enter participant name...',
+                bulkPlaceholder: 'Bulk: name1, name2, name3...',
+                separatorInfo: '⚠️ Separator: comma (,) only - no spaces',
+                addBtn: '➕ Add',
+                importBtn: '📥 Import',
+                participantsTitle: '👥 Participants',
+                noParticipants: 'No participants yet',
+                allWinnersSelected: 'No participants - All winners selected!',
+                spinBtn: '🎰 PICK A WINNER!',
+                lastWinner: '🎯 LAST WINNER: ',
+                winnersTitle: '🏆 Winners List',
+                exportBtn: '📄 Export PDF',
+                deleteAllBtn: '🗑️ Delete All',
+                pleaseEnterName: '⚠️ Please enter a name!',
+                alreadyAdded: '⚠️ "',
+                isAlreadyAdded: '" is already added!',
+                addedSuccessfully: '✅ ',
+                addedSuccess: ' added successfully!',
+                pleaseEnterNames: '⚠️ Please enter names!',
+                addedParticipants: '✅ Added ',
+                participantsAdded: ' participants!',
+                skippedDuplicates: ' (Skipped ',
+                duplicates: ' duplicates)',
+                removed: '🗑️ ',
+                removedSuccess: ' removed!',
+                isAtPointer: '🎯 ',
+                atPointer: ' is at the pointer!',
+                congratulations: 'CONGRATULATIONS!',
+                winnerNumber: 'Winner #',
+                continueBtn: '🎊 Continue',
+                autoLastWinner: '🎉 ',
+                autoAdded: ' is automatically added as the last winner!',
+                deleteWinnerTitle: 'Delete Winner',
+                deleteWinnerMsg: 'Are you sure you want to delete "',
+                fromList: '" from the list?',
+                deleteAllTitle: 'Delete All Winners',
+                deleteAllMsg: 'Are you sure you want to delete ALL winners?',
+                yesDelete: 'Yes, Delete',
+                cancel: 'Cancel',
+                deleted: '🗑️ ',
+                deletedFromHistory: ' deleted!',
+                allWinnersDeleted: '🗑️ All winners deleted!',
+                noWinnersExport: '⚠️ No winners to export!',
+                pdfExported: '📄 winner_list.pdf exported!',
+                pdfFailed: '⚠️ Failed to export PDF.',
+                pdfTitle: 'Pick a Winner - Winners List',
+                generated: 'Generated: ',
+                winnerNameCol: 'Winner Name',
+                dateTimeCol: 'Date/Time'
+            },
+            am: {
+                mainTitle: '🎯 አሸናፊ ይምረጡ',
+                subtitle: 'ይሽከረከር • ያሸንፉ • ያክብሩ',
+                pointerLabel: 'አሸናፊ',
+                namePlaceholder: 'የተሳታፊ ስም ያስገቡ...',
+                bulkPlaceholder: 'ብዙ: ስም1፣ ስም2፣ ስም3...',
+                separatorInfo: '⚠️ መለያ: ኮማ (፣) ብቻ ይጠቀሙ - ክፍተት አይቻልም',
+                addBtn: '➕ ጨምር',
+                importBtn: '📥 አስገባ',
+                participantsTitle: '👥 ተሳታፊዎች',
+                noParticipants: 'እስካሁን ተሳታፊ የለም',
+                allWinnersSelected: 'ተሳታፊ የለም - ሁሉም አሸናፊዎች ተመርጠዋል!',
+                spinBtn: '🎰 አሸናፊ ይምረጡ!',
+                lastWinner: '🎯 የመጨረሻ አሸናፊ: ',
+                winnersTitle: '🏆 የአሸናፊዎች ዝርዝር',
+                exportBtn: '📄 PDF ኤክስፖርት',
+                deleteAllBtn: '🗑️ ሁሉንም ሰርዝ',
+                pleaseEnterName: '⚠️ እባክዎ ስም ያስገቡ!',
+                alreadyAdded: '⚠️ "',
+                isAlreadyAdded: '" አስቀድሞ ተጨምሯል!',
+                addedSuccessfully: '✅ ',
+                addedSuccess: ' በተሳካ ሁኔታ ተጨምሯል!',
+                pleaseEnterNames: '⚠️ እባክዎ ስሞችን ያስገቡ!',
+                addedParticipants: '✅ ተጨምረዋል ',
+                participantsAdded: ' ተሳታፊዎች!',
+                skippedDuplicates: ' (ተዘለሉ ',
+                duplicates: ' ተባዝተዋል)',
+                removed: '🗑️ ',
+                removedSuccess: ' ተወግዷል!',
+                isAtPointer: '🎯 ',
+                atPointer: ' በጠቋሚው ላይ ነው!',
+                congratulations: 'እንኳን ደስ አለዎት!',
+                winnerNumber: 'አሸናፊ #',
+                continueBtn: '🎊 ይቀጥሉ',
+                autoLastWinner: '🎉 ',
+                autoAdded: ' እንደ የመጨረሻ አሸናፊ በራስ-ሰር ተጨምሯል!',
+                deleteWinnerTitle: 'አሸናፊ ሰርዝ',
+                deleteWinnerMsg: 'እርግጠኛ ነዎት "',
+                fromList: '" ከዝርዝሩ መሰረዝ ይፈልጋሉ?',
+                deleteAllTitle: 'ሁሉንም አሸናፊዎች ሰርዝ',
+                deleteAllMsg: 'እርግጠኛ ነዎት ሁሉንም አሸናፊዎች መሰረዝ ይፈልጋሉ?',
+                yesDelete: 'አዎ, ሰርዝ',
+                cancel: 'ተወው',
+                deleted: '🗑️ ',
+                deletedFromHistory: ' ተሰርዟል!',
+                allWinnersDeleted: '🗑️ ሁሉም አሸናፊዎች ተሰርዘዋል!',
+                noWinnersExport: '⚠️ ለኤክስፖርት ምንም አሸናፊ የለም!',
+                pdfExported: '📄 winner_list.pdf ተልኳል!',
+                pdfFailed: '⚠️ PDF መላክ አልተሳካም።',
+                pdfTitle: 'አሸናፊ ይምረጡ - የአሸናፊዎች ዝርዝር',
+                generated: 'የተፈጠረው: ',
+                winnerNameCol: 'የአሸናፊ ስም',
+                dateTimeCol: 'ቀን/ሰዓት'
+            }
+        };
+
+        window.addParticipant = addParticipant;
+        window.bulkImport = bulkImport;
+        window.deleteParticipant = deleteParticipant;
+        window.spinWheel = spinWheel;
+        window.closeModal = closeModal;
+        window.deleteWinner = deleteWinner;
+        window.deleteAllWinners = deleteAllWinners;
+        window.exportToPDF = exportToPDF;
+        window.confirmAction = confirmAction;
+        window.cancelAction = cancelAction;
+        window.setLanguage = setLanguage;
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            var t = translations[lang];
+            
+            document.getElementById('btnEnglish').className = lang === 'en' ? 'lang-btn active' : 'lang-btn';
+            document.getElementById('btnAmharic').className = lang === 'am' ? 'lang-btn active' : 'lang-btn';
+            
+            document.getElementById('mainTitle').textContent = t.mainTitle;
+            document.getElementById('subtitleText').textContent = t.subtitle;
+            document.getElementById('pointerLabel').textContent = t.pointerLabel;
+            document.getElementById('nameInput').placeholder = t.namePlaceholder;
+            document.getElementById('bulkInput').placeholder = t.bulkPlaceholder;
+            document.getElementById('separatorInfo').textContent = t.separatorInfo;
+            document.getElementById('addBtn').textContent = t.addBtn;
+            document.getElementById('importBtn').textContent = t.importBtn;
+            document.getElementById('participantsTitle').innerHTML = t.participantsTitle + ' (<span id="count">' + participants.length + '</span>)';
+            document.getElementById('exportBtn').textContent = t.exportBtn;
+            document.getElementById('deleteAllBtn').textContent = t.deleteAllBtn;
+            
+            var winnersTitleSpan = document.getElementById('winnersTitle');
+            if (winnersTitleSpan) {
+                winnersTitleSpan.textContent = t.winnersTitle;
+            }
+            
+            updateSpinButtonText();
+            
+            if (participants.length === 0) {
+                var noParticipantsP = document.querySelector('#namesList p');
+                if (noParticipantsP) {
+                    noParticipantsP.textContent = t.allWinnersSelected;
+                }
+            }
+            
+            try {
+                localStorage.setItem('language', lang);
+            } catch (e) {}
+        }
+
+        function updateSpinButtonText() {
+            var spinButton = document.getElementById('spinButton');
+            var t = translations[currentLanguage];
+            
+            if (participants.length === 0) {
+                spinButton.textContent = '🎉 ' + t.allWinnersSelected;
+                spinButton.disabled = true;
+            } else if (participants.length === 1) {
+                spinButton.textContent = t.lastWinner + participants[0];
+                spinButton.disabled = true;
+            } else {
+                spinButton.textContent = t.spinBtn;
+                spinButton.disabled = false;
+            }
+        }
+
+        function createParticles() {
+            var container = document.getElementById('bgParticles');
+            for (var i = 0; i < 25; i++) {
+                var particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 5) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function addParticipant() {
+            var input = document.getElementById('nameInput');
+            var name = input.value.trim();
+            var t = translations[currentLanguage];
+            
+            if (name === '') {
+                showMessage(t.pleaseEnterName, 'error');
+                return;
+            }
+            
+            var isDuplicate = participants.some(function(p) {
+                return p.toLowerCase() === name.toLowerCase();
+            });
+            
+            if (isDuplicate) {
+                showMessage(t.alreadyAdded + name + t.isAlreadyAdded, 'error');
+                return;
+            }
+            
+            participants.push(name);
+            input.value = '';
+            updateDisplay();
+            showMessage(t.addedSuccessfully + name + t.addedSuccess, 'success');
+            input.focus();
+        }
+
+        function bulkImport() {
+            var input = document.getElementById('bulkInput');
+            var bulkText = input.value.trim();
+            var t = translations[currentLanguage];
+            
+            if (bulkText === '') {
+                showMessage(t.pleaseEnterNames, 'error');
+                return;
+            }
+            
+            // Only split by comma (English or Amharic) - NO spaces
+            var names = bulkText
+                .split(/[,፣،]+/)
+                .map(function(n) { return n.trim(); })
+                .filter(function(n) { return n !== ''; });
+            
+            var addedCount = 0;
+            var skippedCount = 0;
+            var duplicateNames = [];
+            
+            names.forEach(function(name) {
+                var isDuplicate = participants.some(function(p) {
+                    return p.toLowerCase() === name.toLowerCase();
+                });
+                
+                if (!isDuplicate) {
+                    participants.push(name);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                    duplicateNames.push(name);
+                }
+            });
+            
+            input.value = '';
+            updateDisplay();
+            
+            var msg = '';
+            if (addedCount > 0) {
+                msg = t.addedParticipants + addedCount + t.participantsAdded;
+            }
+            
+            if (skippedCount > 0) {
+                if (msg !== '') msg += ' ';
+                msg += t.skippedDuplicates + skippedCount + t.duplicates;
+                if (duplicateNames.length > 0) {
+                    msg += ': ' + duplicateNames.join(', ');
+                }
+            }
+            
+            if (msg !== '') {
+                showMessage(msg, addedCount > 0 ? 'success' : 'error');
+            }
+        }
+
+        function deleteParticipant(name) {
+            var index = participants.indexOf(name);
+            var t = translations[currentLanguage];
+            if (index !== -1) {
+                participants.splice(index, 1);
+                updateDisplay();
+                showMessage(t.removed + name + t.removedSuccess, 'error');
+            }
+        }
+
+        function updateDisplay() {
+            var namesList = document.getElementById('namesList');
+            var count = document.getElementById('count');
+            var t = translations[currentLanguage];
+            
+            count.textContent = participants.length;
+            namesList.innerHTML = '';
+            
+            if (participants.length === 0) {
+                namesList.innerHTML = '<p style="color: #999; width: 100%; text-align: center;">' + t.allWinnersSelected + '</p>';
+            } else {
+                participants.forEach(function(name) {
+                    var tag = document.createElement('div');
+                    tag.className = 'name-tag';
+                    
+                    var nameSpan = document.createElement('span');
+                    nameSpan.textContent = name;
+                    
+                    var deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = '✕';
+                    deleteBtn.onclick = function() {
+                        deleteParticipant(name);
+                    };
+                    
+                    tag.appendChild(nameSpan);
+                    tag.appendChild(deleteBtn);
+                    namesList.appendChild(tag);
+                });
+            }
+            
+            updateSpinButtonText();
+            updateWheel();
+        }
+
+        function updateWheel() {
+            var wheel = document.getElementById('wheel');
+            wheel.innerHTML = '<div class="wheel-center">🎯</div>';
+            
+            if (participants.length === 0) {
+                wheel.style.background = '#f0f0f0';
+                return;
+            }
+            
+            var segmentAngle = 360 / participants.length;
+            var colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFEAA7', '#DDA0DD', 
+                '#F7DC6F', '#98D8C8', '#BB8FCE', '#FF9800', '#E91E63',
+                '#00BCD4', '#8BC34A', '#FF5722', '#9C27B0', '#3F51B5'
+            ];
+            
+            var gradientStops = [];
+            participants.forEach(function(name, index) {
+                var startAngle = index * segmentAngle;
+                var endAngle = (index + 1) * segmentAngle;
+                var color = colors[index % colors.length];
+                gradientStops.push(color + ' ' + startAngle + 'deg ' + endAngle + 'deg');
+            });
+            
+            wheel.style.background = 'conic-gradient(from 0deg, ' + gradientStops.join(', ') + ')';
+            
+            participants.forEach(function(name, index) {
+                var angle = index * segmentAngle + segmentAngle / 2;
+                
+                var label = document.createElement('div');
+                label.style.cssText = 
+                    'position: absolute;' +
+                    'width: 50%;' +
+                    'height: 50%;' +
+                    'top: 0;' +
+                    'left: 50%;' +
+                    'transform-origin: 0% 100%;' +
+                    'transform: rotate(' + angle + 'deg);' +
+                    'pointer-events: none;';
+                
+                var span = document.createElement('span');
+                span.textContent = name;
+                span.style.cssText = 
+                    'position: absolute;' +
+                    'top: 25%;' +
+                    'left: 50%;' +
+                    'transform: translateX(-50%) rotate(90deg);' +
+                    'font-size: 11px;' +
+                    'font-weight: bold;' +
+                    'color: white;' +
+                    'text-shadow: 1px 1px 3px rgba(0,0,0,0.8);' +
+                    'white-space: nowrap;' +
+                    'max-width: 80px;' +
+                    'overflow: hidden;' +
+                    'text-overflow: ellipsis;';
+                
+                label.appendChild(span);
+                wheel.appendChild(label);
+            });
+        }
+
+        function spinWheel() {
+            if (isSpinning || participants.length < 2) {
+                if (participants.length === 1) {
+                    autoAddLastWinner();
+                }
+                return;
+            }
+            
+            isSpinning = true;
+            var spinButton = document.getElementById('spinButton');
+            var wheel = document.getElementById('wheel');
+            
+            spinButton.disabled = true;
+            
+            var spinDegrees = (8 + Math.random() * 4) * 360;
+            var randomOffset = Math.random() * 360;
+            var totalRotation = spinDegrees + randomOffset;
+            
+            var finalAngle = (currentRotation + totalRotation) % 360;
+            var segmentAngle = 360 / participants.length;
+            var normalizedAngle = (360 - (finalAngle % 360)) % 360;
+            var winnerIndex = Math.floor(normalizedAngle / segmentAngle);
+            var winner = participants[winnerIndex % participants.length];
+            
+            currentRotation += totalRotation;
+            wheel.style.transform = 'rotate(' + currentRotation + 'deg)';
+            
+            setTimeout(function() {
+                highlightWinner(winner);
+                
+                setTimeout(function() {
+                    isSpinning = false;
+                    
+                    winnerCounter++;
+                    
+                    winners.push({
+                        id: winnerCounter,
+                        name: winner,
+                        time: new Date().toLocaleString()
+                    });
+                    
+                    try {
+                        localStorage.setItem('winners', JSON.stringify(winners));
+                        localStorage.setItem('winnerCounter', winnerCounter);
+                    } catch (e) {}
+                    
+                    updateWinnersDisplay();
+                    showCongratulations(winner, winnerCounter);
+                    createConfetti();
+                    
+                    participants = participants.filter(function(p) {
+                        return p !== winner;
+                    });
+                    
+                    updateDisplay();
+                    
+                    if (participants.length === 1) {
+                        setTimeout(function() {
+                            autoAddLastWinner();
+                        }, 3000);
+                    }
+                }, 2000);
+                
+            }, 6000);
+        }
+
+        function autoAddLastWinner() {
+            if (participants.length !== 1) return;
+            
+            var lastWinner = participants[0];
+            var t = translations[currentLanguage];
+            
+            winnerCounter++;
+            
+            winners.push({
+                id: winnerCounter,
+                name: lastWinner,
+                time: new Date().toLocaleString()
+            });
+            
+            try {
+                localStorage.setItem('winners', JSON.stringify(winners));
+                localStorage.setItem('winnerCounter', winnerCounter);
+            } catch (e) {}
+            
+            participants = [];
+            updateWinnersDisplay();
+            updateDisplay();
+            showMessage(t.autoLastWinner + lastWinner + t.autoAdded, 'success');
+            showCongratulations(lastWinner, winnerCounter);
+            createConfetti();
+        }
+
+        function highlightWinner(winner) {
+            var t = translations[currentLanguage];
+            var highlight = document.createElement('div');
+            highlight.style.cssText = 
+                'position: fixed;' +
+                'top: 50%;' +
+                'left: 50%;' +
+                'transform: translate(-50%, -50%);' +
+                'background: rgba(0, 0, 0, 0.9);' +
+                'color: #FFD700;' +
+                'padding: 20px 30px;' +
+                'border-radius: 20px;' +
+                'font-size: 24px;' +
+                'font-weight: bold;' +
+                'z-index: 1500;' +
+                'border: 3px solid #FFD700;';
+            highlight.textContent = t.isAtPointer + winner + t.atPointer;
+            document.body.appendChild(highlight);
+            setTimeout(function() { highlight.remove(); }, 2000);
+        }
+
+        function updateWinnersDisplay() {
+            var winnersSection = document.getElementById('winnersSection');
+            var winnersList = document.getElementById('winnersList');
+            
+            if (winners.length === 0) {
+                winnersSection.style.display = 'none';
+                return;
+            }
+            
+            winnersSection.style.display = 'block';
+            winnersList.innerHTML = '';
+            
+            winners.forEach(function(winner) {
+                var item = document.createElement('div');
+                item.className = 'winner-item';
+                
+                var numberDiv = document.createElement('div');
+                numberDiv.className = 'winner-number';
+                numberDiv.textContent = winner.id;
+                
+                var infoDiv = document.createElement('div');
+                infoDiv.className = 'winner-info';
+                
+                var nameDiv = document.createElement('div');
+                nameDiv.className = 'winner-name';
+                nameDiv.textContent = winner.name;
+                
+                var timeDiv = document.createElement('div');
+                timeDiv.className = 'winner-time';
+                timeDiv.textContent = winner.time;
+                
+                infoDiv.appendChild(nameDiv);
+                infoDiv.appendChild(timeDiv);
+                
+                var deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-winner-btn';
+                deleteBtn.textContent = '✕';
+                deleteBtn.onclick = function() { deleteWinner(winner.id); };
+                
+                item.appendChild(numberDiv);
+                item.appendChild(infoDiv);
+                item.appendChild(deleteBtn);
+                winnersList.appendChild(item);
+            });
+        }
+
+        function deleteWinner(winnerId) {
+            var winner = winners.find(function(w) { return w.id === winnerId; });
+            var t = translations[currentLanguage];
+            
+            if (winner) {
+                showConfirmDialog(
+                    t.deleteWinnerTitle,
+                    t.deleteWinnerMsg + winner.name + t.fromList,
+                    function() {
+                        winners = winners.filter(function(w) { return w.id !== winnerId; });
+                        try {
+                            localStorage.setItem('winners', JSON.stringify(winners));
+                        } catch (e) {}
+                        updateWinnersDisplay();
+                        showMessage(t.deleted + winner.name + t.deletedFromHistory, 'error');
+                    }
+                );
+            }
+        }
+
+        function deleteAllWinners() {
+            var t = translations[currentLanguage];
+            showConfirmDialog(
+                t.deleteAllTitle,
+                t.deleteAllMsg,
+                function() {
+                    winners = [];
+                    winnerCounter = 0;
+                    try {
+                        localStorage.setItem('winners', JSON.stringify(winners));
+                        localStorage.setItem('winnerCounter', winnerCounter);
+                    } catch (e) {}
+                    updateWinnersDisplay();
+                    showMessage(t.allWinnersDeleted, 'error');
+                }
+            );
+        }
+
+        function showConfirmDialog(title, message, onConfirm) {
+            var t = translations[currentLanguage];
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.style.zIndex = '3000';
+            
+            var dialog = document.createElement('div');
+            dialog.className = 'confirm-dialog';
+            dialog.innerHTML = 
+                '<h3>' + title + '</h3>' +
+                '<p>' + message + '</p>' +
+                '<div class="confirm-buttons">' +
+                    '<button class="btn-confirm-delete" onclick="confirmAction()">' + t.yesDelete + '</button>' +
+                    '<button class="btn-cancel-delete" onclick="cancelAction()">' + t.cancel + '</button>' +
+                '</div>';
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            window.confirmCallback = onConfirm;
+            window.confirmOverlay = overlay;
+        }
+
+        function confirmAction() {
+            if (window.confirmCallback) window.confirmCallback();
+            if (window.confirmOverlay) window.confirmOverlay.remove();
+        }
+
+        function cancelAction() {
+            if (window.confirmOverlay) window.confirmOverlay.remove();
+        }
+
+        function showCongratulations(winner, position) {
+            var t = translations[currentLanguage];
+            var modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = 
+                '<div class="modal-content">' +
+                    '<div class="modal-emoji">🎉</div>' +
+                    '<div class="modal-title">' + t.congratulations + '</div>' +
+                    '<div class="modal-winner">' + winner + '</div>' +
+                    '<div class="modal-position">' + t.winnerNumber + position + '</div>' +
+                    '<button class="modal-close-btn" onclick="closeModal()">' + t.continueBtn + '</button>' +
+                '</div>';
+            document.body.appendChild(modal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function closeModal() {
+            var modal = document.querySelector('.modal-overlay');
+            if (modal) modal.remove();
+        }
+
+        function exportToPDF() {
+            var t = translations[currentLanguage];
+            if (winners.length === 0) {
+                showMessage(t.noWinnersExport, 'error');
+                return;
+            }
+            
+            var pdfContent = document.getElementById('pdfContent');
+            pdfContent.innerHTML = buildPDFHTML(t);
+            pdfContent.style.display = 'block';
+            pdfContent.style.position = 'absolute';
+            pdfContent.style.left = '-9999px';
+            pdfContent.style.width = '800px';
+            pdfContent.style.background = 'white';
+            pdfContent.style.padding = '20px';
+            pdfContent.style.fontFamily = "'Noto Sans Ethiopic', 'Arial', sans-serif";
+            
+            html2canvas(pdfContent, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(function(canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var { jsPDF } = window.jspdf;
+                var doc = new jsPDF('p', 'mm', 'a4');
+                
+                var imgWidth = 210;
+                var pageHeight = 297;
+                var imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                var heightLeft = imgHeight;
+                var position = 0;
+                
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                doc.save('winner_list.pdf');
+                pdfContent.style.display = 'none';
+                showMessage(t.pdfExported, 'success');
+            }).catch(function(error) {
+                console.error('PDF export error:', error);
+                pdfContent.style.display = 'none';
+                showMessage(t.pdfFailed, 'error');
+            });
+        }
+
+        function buildPDFHTML(t) {
+            var html = '';
+            html += '<div style="text-align: center; padding: 20px;">';
+            html += '<h2 style="color: #667eea; font-size: 24px; margin-bottom: 10px;">' + t.pdfTitle + '</h2>';
+            html += '<p style="color: #666; font-size: 14px; margin-bottom: 20px;">' + t.generated + new Date().toLocaleString() + '</p>';
+            html += '<hr style="border: 1px solid #667eea; margin-bottom: 20px;">';
+            
+            html += '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead>';
+            html += '<tr style="background: #667eea; color: white;">';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">#</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">' + t.winnerNameCol + '</th>';
+            html += '<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">' + t.dateTimeCol + '</th>';
+            html += '</tr>';
+            html += '</thead>';
+            html += '<tbody>';
+            
+            winners.forEach(function(winner, index) {
+                var bgColor = index % 2 === 0 ? '#ffffff' : '#f0f0f0';
+                html += '<tr style="background: ' + bgColor + ';">';
+                html += '<td style="padding: 8px; border: 1px solid #ddd;">' + winner.id + '</td>';
+                html += '<td style="padding: 8px; border: 1px solid #ddd;">' + winner.name + '</td>';
+                html += '<td style="padding: 8px; border: 1px solid #ddd;">' + winner.time + '</td>';
+                html += '</tr>';
+            });
+            
+            html += '</tbody>';
+            html += '</table>';
+            html += '</div>';
+            
+            return html;
+        }
+
+        function createConfetti() {
+            var colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFEAA7', '#FF69B4'];
+            for (var i = 0; i < 80; i++) {
+                setTimeout(function() {
+                    var confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                    document.body.appendChild(confetti);
+                    setTimeout(function() { confetti.remove(); }, 2000);
+                }, Math.random() * 1000);
+            }
+        }
+
+        function showMessage(text, type) {
+            var message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message show ' + type;
+            clearTimeout(message.timeout);
+            message.timeout = setTimeout(function() {
+                message.classList.remove('show');
+            }, 3000);
+        }
+
+        function loadData() {
+            try {
+                var savedWinners = localStorage.getItem('winners');
+                var savedCounter = localStorage.getItem('winnerCounter');
+                var savedLanguage = localStorage.getItem('language');
+                
+                if (savedWinners) winners = JSON.parse(savedWinners);
+                if (savedCounter) winnerCounter = parseInt(savedCounter);
+                if (savedLanguage) currentLanguage = savedLanguage;
+                
+                updateWinnersDisplay();
+            } catch (e) {}
+        }
+
+        document.getElementById('nameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addParticipant();
+        });
+
+        document.getElementById('bulkInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') bulkImport();
+        });
+
+        // Initialize
+        createParticles();
+        loadData();
+        setLanguage(currentLanguage);
+        updateDisplay();
+        console.log('Pick a Winner fully initialized!');
+    </script>
+</body>
+</html>
